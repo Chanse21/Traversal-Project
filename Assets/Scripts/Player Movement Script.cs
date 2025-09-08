@@ -4,7 +4,8 @@ public class PlayerMovementScript : MonoBehaviour
 {
     Rigidbody2D rb;
     public float moveSpeed = 5f;
-
+    public float jumpForce = 7f;
+    private bool isGrounded = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -26,5 +27,26 @@ public class PlayerMovementScript : MonoBehaviour
         newPosition.x -= moveSpeed * Time.deltaTime;
     }
         transform.position = newPosition;
+
+    if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        {
+          rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        }
+    }  
+
+   void OnCollisionEnter2D(Collision2D collision)
+{
+    if (collision.gameObject.CompareTag("Ground"))
+    {
+        isGrounded = true;
     }
+}
+
+   void OnCollisionExit2D(Collision2D collision)
+  {
+    if (collision.gameObject.CompareTag("Ground"))
+    {
+        isGrounded = false;
+    }
+  }
 }
