@@ -11,15 +11,16 @@ public class PlatformSpawner : MonoBehaviour
 
     public float spawnXMax = 5f;
 
-    public float spawnY = 10f;        // Spawn above the camera
+    public float spawnYOffset = 10f;        // Spawn above the camera
 
-
+    private Camera mainCam;
 
     void Start()
 
     {
+        mainCam = Camera.main;
 
-        InvokeRepeating("SpawnPlatform", 1f, spawnInterval);
+        InvokeRepeating(nameof(SpawnPlatform), 1f, spawnInterval);
 
     }
 
@@ -28,10 +29,11 @@ public class PlatformSpawner : MonoBehaviour
     void SpawnPlatform()
 
     {
+        float camBottom = mainCam.transform.position.y - mainCam.orthographicSize;
 
         float randomX = Random.Range(spawnXMin, spawnXMax);
 
-        Vector3 spawnPos = new Vector3(randomX, spawnY, 0);
+        Vector3 spawnPos = new Vector3(randomX, camBottom - spawnYOffset, 0);
 
         Instantiate(MagnetPrefab, spawnPos, Quaternion.identity);
 
