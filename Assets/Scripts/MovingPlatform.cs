@@ -5,21 +5,66 @@ using System.Collections.Generic;
 public class MovingPlatform : MonoBehaviour
 {
 
-    Rigidbody2D rb;
-
     public float moveSpeed = 5f;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    public bool usePhysics = true; // Set to false if you don't want to use Rigidbody2D
+
+
+
+    private Rigidbody2D rb;
+
+
+
     void Start()
+
     {
-        rb = GetComponent<Rigidbody2D>();
+
+        if (usePhysics)
+
+        {
+
+            rb = GetComponent<Rigidbody2D>();
+
+            if (rb == null)
+
+            {
+
+                Debug.LogWarning("Rigidbody2D not found! Switching to transform movement.");
+
+                usePhysics = false;
+
+            }
+
+        }
+
     }
 
-    // Update is called once per frame
+
+
     void FixedUpdate()
+
     {
 
-        Vector2 newVelocity = new Vector2(rb.linearVelocity.x, moveSpeed);
+        if (usePhysics)
 
-        rb.linearVelocity = newVelocity;
+        {
+
+            // Move with Rigidbody2D velocity
+
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, moveSpeed);
+
+        }
+
+        else
+
+        {
+
+            // Move without Rigidbody2D
+
+            transform.position += Vector3.up * moveSpeed * Time.fixedDeltaTime;
+
+        }
+
     }
+
 }

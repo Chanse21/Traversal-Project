@@ -1,9 +1,39 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public class Magnetize : MonoBehaviour
 {
 
-    private Transform currentPlatform = null;
+    private Rigidbody2D rb;
+
+
+
+    [Header("Magnet Settings")]
+
+    public float pullForce = 15f;
+
+    public float maxPullSpeed = 10f;
+
+    public float attachDistance = 0.5f;
+
+
+
+    private bool isMagnetized = false;
+
+    private Transform currentMagnet = null;
+
+    private List<Transform> nearbyMagnets = new List<Transform>();
+
+
+
+    void Start()
+
+    {
+
+        rb = GetComponent<Rigidbody2D>();
+
+    }
 
 
 
@@ -11,41 +41,33 @@ public class Magnetize : MonoBehaviour
 
     {
 
-        // Example: Press "E" to magnetize to platform
+        // If E is held, magnetize toward the nearest magnet
 
-        if (Input.GetKeyDown(KeyCode.E) && currentPlatform != null)
+        if (Input.GetKey(KeyCode.E))
 
         {
 
-            transform.SetParent(currentPlatform);
+            if (nearbyMagnets.Count > 0)
+
+            {
+
+                currentMagnet = GetClosestMagnet();
+
+
+
+                if (currentMagnet != null)
+
+                    MagnetPull();
+
+            }
 
         }
 
-
-
-        // Release when key is lifted
-
-        if (Input.GetKeyUp(KeyCode.E))
+        else if (Input.GetKeyUp(KeyCode.E))
 
         {
 
-            transform.SetParent(null);
-
-        }
-
-    }
-
-
-
-    void OnCollisionEnter2D(Collision2D collision)
-
-    {
-
-        if (collision.gameObject.CompareTag("Platform"))
-
-        {
-
-            currentPlatform = collision.transform;
+            DetachFromMagnet();
 
         }
 
@@ -53,17 +75,163 @@ public class Magnetize : MonoBehaviour
 
 
 
-    void OnCollisionExit2D(Collision2D collision)
+    Transform GetClosestMagnet()
 
     {
 
-        if (collision.gameObject.CompareTag("Platform"))
+        Transform closest = null;
+
+        float minDist = Mathf.Infinity;
+
+
+
+        foreach (Transform magnet in nearbyMagnets)
 
         {
 
-            if (currentPlatform == collision.transform)
+            if (magnet == null) continue;
 
-                currentPlatform = null;
+            float dist = Vector2.Distance(transform.position, magnet.position);
+
+            if (dist < minDist)
+
+            {
+
+                minDist = dist;
+
+                closest = magnet;
+
+            }
+
+        }
+
+        return closest;
+
+    }
+
+
+
+    void MagnetPull()
+
+    {
+
+        if (currentMagnet == null) return;
+
+
+
+        Vector2 direction = (currentMagnet.position - transform.position);
+
+        float distance = direction.magnitude;
+
+
+
+        if (distance > attachDistance)
+
+        {
+
+            Vector2 pull = direction.normalized * pullForce;
+
+            rb.AddForce(pull);
+
+            rb.linearVelocity = Vector2.ClampMagnitude(rb.linearVelocity, maxPullSpeed);
+
+        }
+
+        else
+
+        {
+
+            AttachToMagnet();
+
+        }
+
+    }
+
+
+
+    void AttachToMagnet()
+
+    {
+
+        if (isMagnetized) return;
+
+
+
+        isMagnetized = true;
+
+        rb.linearVelocity = Vector2.zero;
+
+        rb.isKinematic = true;
+
+        transform.SetParent(currentMagnet);
+
+        Debug.Log("Player attached to " + currentMagnet.name);
+
+    }
+
+
+
+    void DetachFromMagnet()
+
+    {
+
+        if (!isMagnetized) return;
+
+
+
+        isMagnetized = false;
+
+        rb.isKinematic = false;
+
+        transform.SetParent(null);
+
+        Debug.Log("Player detached from " + currentMagnet.name);
+
+    }
+
+
+
+    private void OnTriggerEnter2D(Collider2D collision)
+
+    {
+
+        if (collision.CompareTag("Platform"))
+
+        {
+
+            if (!nearbyMagnets.Contains(collision.transform))
+
+                nearbyMagnets.Add(collision.transform);
+
+
+
+            Debug.Log("Entered magnet zone: " + collision.name);
+
+        }
+
+    }
+
+
+
+    private void OnTriggerExit2D(Collider2D collision)
+
+    {
+
+        if (collision.CompareTag("Platform"))
+
+        {
+
+            nearbyMagnets.Remove(collision.transform);
+
+
+
+            if (currentMagnet == collision.transform)
+
+                currentMagnet = null;
+
+
+
+            Debug.Log("Exited magnet zone: " + collision.name);
 
         }
 
